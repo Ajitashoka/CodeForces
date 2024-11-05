@@ -1,4 +1,4 @@
-https://codeforces.com/problemset/problem/2007/C
+//https://codeforces.com/problemset/problem/2007/C
 #include <bits/stdc++.h>
 using namespace std;
 void solve()
