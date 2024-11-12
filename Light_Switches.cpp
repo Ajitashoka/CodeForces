@@ -9,11 +9,14 @@ void solve()
   for(int i=0; i<n; i++)
   cin>>ans[i];
   sort(ans.begin(),ans.end());
+  // If there is single light source print its initial switch time.
   if(n==1)
   {
     cout<<ans[n-1]<<endl;
     return;
   }
+  //Start to find the minimum time for all the switches that were turned on before the last switch such that they are ON.
+  //A nice way to find it to binary search within the time frame in which last light is turned on.
   int res=0;
   for(int i=0; i<n-1; i++)
   {
@@ -25,7 +28,7 @@ void solve()
       res=max(res,l+1);
       continue;
     }
-    
+    //Binary Search Implementation
     while(r>l+1)
     {
       int mid=(l+r)/2;
@@ -42,6 +45,7 @@ void solve()
       return;
     }
   }
+  // Check if the time works well for all the lights
   for(int i=0; i<n-1; i++)
   {
     if(((res-ans[i])/k)%2!=0)
@@ -50,6 +54,7 @@ void solve()
       return;
     }
   }
+  //ON Alright,lets print it.
   cout<<res<<endl;
 }
 int main() 
