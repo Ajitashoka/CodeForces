@@ -1,122 +1,185 @@
-# MCP Tool Automation Platform - System Architecture
+# 🚀 MCP Tool Automation Platform
 
-## 1. High-Level System Overview
-The platform follows a **Microservices-based Modular Architecture** orchestrated by **FastAPI**. It separates concerns between the User Interface, Agentic Logic, and Specialized Data Handling services to ensure scalability and maintainability.
+A scalable **Microservices-based Automation Platform** designed to
+enable intelligent repository understanding, document ingestion, vector
+search, and graph-based reasoning using Agentic workflows.
 
-## System Architecture - Block Diagram
+------------------------------------------------------------------------
 
-```mermaid
+## 📌 Overview
+
+The MCP Tool Automation Platform combines:
+
+-   ⚙️ **FastAPI Gateway** (Orchestration Layer)
+-   🤖 **Agent Service (LangGraph-based workflows)**
+-   🐙 Git & Document Processing Services
+-   🧠 Embedding + Vector Search (Qdrant)
+-   📈 Graph Database (Neo4j)
+-   💬 Angular Frontend (Chat Interface)
+
+It enables semantic + relational querying across repositories and
+documentation.
+
+------------------------------------------------------------------------
+
+# 🏗️ System Architecture
+
+## 🔷 High-Level Architecture
+
+``` mermaid
 graph TB
-    subgraph CLIENT["🖥️ CLIENT LAYER"]
-        UI["Angular Frontend<br/>UI & Chat Interface"]
+    subgraph CLIENT["CLIENT LAYER"]
+        UI["Angular Frontend"]
     end
 
-    subgraph API["⚙️ FASTAPI GATEWAY<br/>Router & Orchestrator"]
-        direction TB
+    subgraph API["FASTAPI GATEWAY"]
         GW["API Gateway"]
     end
 
-    subgraph CORE["🔧 CORE SERVICES"]
-        direction TB
-        AGENT["🤖 Agent Service<br/>LangGraph Workflow"]
-        GIT["🐙 Git Service<br/>Clone/Pull Repos"]
-        UTIL["⚙️ Utility Service<br/>Logging/Config"]
+    subgraph CORE["CORE SERVICES"]
+        AGENT["Agent Service"]
+        GIT["Git Service"]
+        UTIL["Utility Service"]
     end
 
-    subgraph DATA["📊 DATA SERVICES"]
-        direction TB
-        DOC["📄 Document Service<br/>Parse API Guides"]
-        INGEST["🧹 Ingestion Service<br/>Chunk & Clean"]
-        EMBED["🧠 Embedding Service<br/>Vector Generation"]
+    subgraph DATA["DATA SERVICES"]
+        DOC["Document Service"]
+        INGEST["Ingestion Service"]
+        EMBED["Embedding Service"]
     end
 
-    subgraph STORAGE["💾 STORAGE LAYER"]
-        direction TB
-        QDRANT["🔍 Qdrant DB<br/>Vector Search"]
-        NEO4J["📈 Neo4j DB<br/>Graph Relations"]
-        LOGS["📋 Logs & Monitor"]
+    subgraph STORAGE["STORAGE LAYER"]
+        QDRANT["Qdrant"]
+        NEO4J["Neo4j"]
+        LOGS["Logs"]
     end
 
-    %% Client to API
-    UI -->|WebSocket/HTTP| GW
-
-    %% API to Core Services
+    UI --> GW
     GW --> AGENT
     GW --> GIT
     GW --> UTIL
-
-    %% API to Data Services
     GW --> DOC
     GW --> INGEST
     GW --> EMBED
 
-    %% Core Services Flow
-    AGENT -->|Query Context| QDRANT
-    AGENT -->|Query Graph| NEO4J
-    AGENT -->|Trigger| GIT
+    AGENT --> QDRANT
+    AGENT --> NEO4J
+    GIT --> INGEST
+    DOC --> INGEST
+    INGEST --> EMBED
+    EMBED --> QDRANT
+    INGEST --> NEO4J
+```
 
-    %% Data Pipeline
-    GIT -->|Raw Code| INGEST
-    DOC -->|API Docs| INGEST
-    INGEST -->|Chunks| EMBED
-    EMBED -->|Vectors| QDRANT
-    INGEST -->|Nodes/Edges| NEO4J
+------------------------------------------------------------------------
 
-    %% Monitoring
-    UTIL -.->|Monitor| LOGS
+# 🔄 Data Processing Pipeline
 
-    %% Styling
-    classDef client fill:#e1f5fe,stroke:#01579b,stroke-width:3px,color:#000;
-    classDef gateway fill:#fff9c4,stroke:#f57f17,stroke-width:3px,color:#000;
-    classDef core fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px,color:#000;
-    classDef data fill:#f3e5f5,stroke:#7b1fa2,stroke-width:2px,color:#000;
-    classDef storage fill:#fff3e0,stroke:#ef6c00,stroke-width:3px,color:#000;
-
-    class UI client;
-    class GW gateway;
-    class AGENT,GIT,UTIL core;
-    class DOC,INGEST,EMBED data;
-    class QDRANT,NEO4J,LOGS storage;
-
+``` mermaid
 graph LR
-    A["📥 Input Data<br/>Repo/PDF"] -->|Clone/Parse| B["🐙 Git Service<br/>📄 Doc Service"]
-    B -->|Raw Data| C["🧹 Ingestion<br/>Chunk & Clean"]
-    C -->|Processed Chunks| D["🧠 Embedding<br/>Generate Vectors"]
-    D -->|Vectors| E["🔍 Qdrant<br/>Vector Store"]
-    C -->|Nodes & Edges| F["📈 Neo4j<br/>Graph Store"]
-    E -->|Similarity Search| G["🤖 Agent Service<br/>Generate Response"]
-    F -->|Relationship Query| G
-    G -->|Answer| H["💬 User<br/>Chat Interface"]
+    A["Input Repo/PDF"] --> B["Git / Doc Service"]
+    B --> C["Ingestion"]
+    C --> D["Embedding"]
+    D --> E["Qdrant Vector DB"]
+    C --> F["Neo4j Graph DB"]
+    E --> G["Agent Service"]
+    F --> G
+    G --> H["User Chat Interface"]
+```
 
-    classDef input fill:#ffebee,stroke:#c62828,stroke-width:2px;
-    classDef process fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef storage fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
-    classDef output fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
+------------------------------------------------------------------------
 
-    class A input;
-    class B,C,D process;
-    class E,F storage;
-    class G,H output;
+# 🔍 Query Flow
 
+``` mermaid
 graph TD
-    U["👤 User Query"]
-    U -->|Send Question| API["⚙️ FastAPI<br/>Gateway"]
-    API -->|Forward| AG["🤖 Agent<br/>Service"]
-    AG -->|Vector Search| QD["🔍 Qdrant"]
-    AG -->|Graph Query| NJ["📈 Neo4j"]
-    QD -->|Semantic Results| AG
-    NJ -->|Relationships| AG
-    AG -->|Process & Generate| AG
-    AG -->|Response| API
-    API -->|WebSocket| U
-    U -->|Display| UI["💬 Chat Interface"]
+    U["User Query"] --> API["FastAPI Gateway"]
+    API --> AG["Agent Service"]
+    AG --> QD["Qdrant"]
+    AG --> NJ["Neo4j"]
+    QD --> AG
+    NJ --> AG
+    AG --> API
+    API --> U
+```
 
-    classDef user fill:#e1f5fe,stroke:#01579b,stroke-width:2px;
-    classDef api fill:#fff9c4,stroke:#f57f17,stroke-width:2px;
-    classDef logic fill:#e8f5e9,stroke:#2e7d32,stroke-width:2px;
-    classDef db fill:#fff3e0,stroke:#ef6c00,stroke-width:2px;
+------------------------------------------------------------------------
 
-    class U,UI user;
-    class API api;
-    class AG logic;
-    class QD,NJ db;
+# 🧠 Core Components
+
+## 1️⃣ FastAPI Gateway
+
+-   Central router
+-   WebSocket + REST support
+-   Authentication & orchestration
+
+## 2️⃣ Agent Service
+
+-   LangGraph-based workflow engine
+-   Hybrid retrieval (Vector + Graph)
+-   Context-aware response generation
+
+## 3️⃣ Git Service
+
+-   Clone / Pull repositories
+-   Source code ingestion trigger
+
+## 4️⃣ Document Service
+
+-   Parse API guides / PDFs
+-   Extract structured data
+
+## 5️⃣ Ingestion Service
+
+-   Clean & chunk data
+-   Generate nodes & edges
+
+## 6️⃣ Embedding Service
+
+-   Generate vector embeddings
+-   Store in Qdrant
+
+## 7️⃣ Storage Layer
+
+-   🔍 Qdrant → Semantic search
+-   📈 Neo4j → Relationship reasoning
+-   📋 Logs → Monitoring & observability
+
+------------------------------------------------------------------------
+
+# ⚙️ Tech Stack
+
+-   **Backend:** FastAPI
+-   **Frontend:** Angular
+-   **Workflow Engine:** LangGraph
+-   **Vector DB:** Qdrant
+-   **Graph DB:** Neo4j
+-   **Embedding Models:** OpenAI / Local LLM
+-   **Containerization:** Docker (recommended)
+
+------------------------------------------------------------------------
+
+# 🚀 Key Features
+
+✔ Microservices Architecture\
+✔ Hybrid Retrieval (Vector + Graph)\
+✔ Scalable & Modular Design\
+✔ Real-time Chat via WebSockets\
+✔ Repository + Document Intelligence\
+✔ Observability & Logging
+
+------------------------------------------------------------------------
+
+# 📦 Future Enhancements
+
+-   Kubernetes deployment
+-   Role-based access control
+-   Multi-tenant support
+-   Advanced analytics dashboard
+-   Streaming ingestion pipeline
+
+------------------------------------------------------------------------
+
+# 👨‍💻 Author
+
+Designed for scalable AI-driven automation platforms.
